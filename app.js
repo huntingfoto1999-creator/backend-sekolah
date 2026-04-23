@@ -76,6 +76,40 @@ app.use("/absensi", absensiRoutes);
 app.use("/ppdb", ppdbRoutes);
 app.use("/absensi-guru", absensiGuruRoutes);
 
+app.get("/buat-admin", async (req, res) => {
+  const bcrypt = require("bcrypt");
+
+  try {
+    const passwordHash = await bcrypt.hash("12345", 10);
+
+    const cekSql = "SELECT id FROM users WHERE username = ? LIMIT 1";
+    db.query(cekSql, ["admin"], (cekErr, cekResults) => {
+      if (cekErr) {
+        return res.status(500).json({ success: false, message: cekErr.message });
+      }
+
+      if (cekResults.length > 0) {
+        return res.json({ success: true, message: "User admin sudah ada" });
+      }
+
+      const sql = `
+        INSERT INTO users (nama, username, password, role, is_active)
+        VALUES (?, ?, ?, ?, ?)
+      `;
+
+      db.query(sql, ["Administrator", "admin", passwordHash, "admin", 1], (err) => {
+        if (err) {
+          return res.status(500).json({ success: false, message: err.message });
+        }
+
+        res.json({ success: true, message: "Admin berhasil dibuat" });
+      });
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 // handler route tidak ditemukan
 app.use((req, res) => {
   res.status(404).json({
