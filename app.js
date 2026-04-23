@@ -137,18 +137,59 @@ app.listen(PORT, () => {
 app.get("/buat-admin", async (req, res) => {
   const bcrypt = require("bcrypt");
 
-  const passwordHash = await bcrypt.hash("12345", 10);
+  try {
+    const passwordHash = await bcrypt.hash("12345", 10);
 
-  const sql = `
-    INSERT INTO users (nama, username, password, role, is_active)
-    VALUES (?, ?, ?, ?, ?)
-  `;
+    const cekSql = "SELECT id FROM users WHERE username = ? LIMIT 1";
+    db.query(cekSql, ["admin"], (cekErr, cekResults) => {
+      if (cekErr) {
+        return res.status(500).json({ success: false, message: cekErr.message });
+      }
 
-  db.query(sql, ["Administrator", "admin", passwordHash, "admin", 1], (err) => {
-    if (err) {
-      return res.json({ error: err.message });
-    }
+      if (cekResults.length > 0) {
+        const updateSql = `
+          UPDATE users
+          SET nama = ?, password = ?, role = ?, is_active = ?
+          WHERE username = ?
+        `;
 
-    res.json({ success: true, message: "Admin berhasil dibuat" });
-  });
+        db.query(
+          updateSql,
+          ["Administrator", passwordHash, "admin", 1, "admin"],
+          (updateErr) => {
+            if (updateErr) {
+              return res.status(500).json({ success: false, message: updateErr.message });
+            }
+
+            return res.json({
+              success: true,
+              message: "Password admin berhasil direset"
+            });
+          }
+        );
+      } else {
+        const insertSql = `
+          INSERT INTO users (nama, username, password, role, is_active)
+          VALUES (?, ?, ?, ?, ?)
+        `;
+
+        db.query(
+          insertSql,
+          ["Administrator", "admin", passwordHash, "admin", 1],
+          (insertErr) => {
+            if (insertErr) {
+              return res.status(500).json({ success: false, message: insertErr.message });
+            }
+
+            return res.json({
+              success: true,
+              message: "Admin berhasil dibuat"
+            });
+          }
+        );
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
 });
