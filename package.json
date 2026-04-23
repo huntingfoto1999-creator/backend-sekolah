@@ -2,10 +2,11 @@
   "name": "backend-sekolah",
   "version": "1.0.0",
   "description": "Backend Sistem Sekolah",
-  "main": "server.js",
+  "main": "app.js",
   "scripts": {
-  "start": "node seedUsers.js && node app.js"
-}
+    "start": "node app.js",
+    "seed": "node seedUsers.js"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
