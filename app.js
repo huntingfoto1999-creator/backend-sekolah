@@ -80,77 +80,47 @@ app.use("/absensi-guru", absensiGuruRoutes);
 
 // ================= TEMP ROUTE BUAT ADMIN =================
 // pakai sekali saja, lalu hapus setelah login berhasil
-app.get("/buat-admin", async (req, res) => {
+app.get("/buat-admin-baru", async (req, res) => {
   const bcrypt = require("bcrypt");
 
   try {
     const passwordHash = await bcrypt.hash("12345", 10);
 
     const cekSql = "SELECT id FROM users WHERE username = ? LIMIT 1";
-    db.query(cekSql, ["admin"], (cekErr, cekResults) => {
+    db.query(cekSql, ["adminbaru"], (cekErr, cekResults) => {
       if (cekErr) {
-        return res.status(500).json({
-          success: false,
-          message: cekErr.message
+        return res.status(500).json({ success: false, message: cekErr.message });
+      }
+
+      if (cekResults.length > 0) {
+        return res.json({
+          success: true,
+          message: "User adminbaru sudah ada"
         });
       }
 
-      // kalau admin sudah ada → reset password
-      if (cekResults.length > 0) {
-        const updateSql = `
-          UPDATE users
-          SET nama = ?, password = ?, role = ?, is_active = ?
-          WHERE username = ?
-        `;
+      const insertSql = `
+        INSERT INTO users (nama, username, password, role, is_active)
+        VALUES (?, ?, ?, ?, ?)
+      `;
 
-        db.query(
-          updateSql,
-          ["Administrator", passwordHash, "admin", 1, "admin"],
-          (updateErr) => {
-            if (updateErr) {
-              return res.status(500).json({
-                success: false,
-                message: updateErr.message
-              });
-            }
-
-            return res.json({
-              success: true,
-              message: "Password admin berhasil direset"
-            });
+      db.query(
+        insertSql,
+        ["Administrator Baru", "adminbaru", passwordHash, "admin", 1],
+        (insertErr) => {
+          if (insertErr) {
+            return res.status(500).json({ success: false, message: insertErr.message });
           }
-        );
-      } else {
-        // kalau admin belum ada → buat baru
-        const insertSql = `
-          INSERT INTO users (nama, username, password, role, is_active)
-          VALUES (?, ?, ?, ?, ?)
-        `;
 
-        db.query(
-          insertSql,
-          ["Administrator", "admin", passwordHash, "admin", 1],
-          (insertErr) => {
-            if (insertErr) {
-              return res.status(500).json({
-                success: false,
-                message: insertErr.message
-              });
-            }
-
-            return res.json({
-              success: true,
-              message: "Admin berhasil dibuat"
-            });
-          }
-        );
-      }
+          return res.json({
+            success: true,
+            message: "User adminbaru berhasil dibuat"
+          });
+        }
+      );
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message
-    });
+    return res.status(500).json({ success: false, message: error.message });
   }
 });
 
