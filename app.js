@@ -97,3 +97,22 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`Server jalan di port ${PORT}`);
 });
+
+app.get("/buat-admin", async (req, res) => {
+  const bcrypt = require("bcrypt");
+
+  const passwordHash = await bcrypt.hash("12345", 10);
+
+  const sql = `
+    INSERT INTO users (nama, username, password, role, is_active)
+    VALUES (?, ?, ?, ?, ?)
+  `;
+
+  db.query(sql, ["Administrator", "admin", passwordHash, "admin", 1], (err) => {
+    if (err) {
+      return res.json({ error: err.message });
+    }
+
+    res.json({ success: true, message: "Admin berhasil dibuat" });
+  });
+});
