@@ -4,6 +4,8 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 
+const db = require("./config/db");
+
 const beritaRoutes = require("./routes/beritaRoutes");
 const authRoutes = require("./routes/authRoutes");
 const guruRoutes = require("./routes/guruRoutes");
