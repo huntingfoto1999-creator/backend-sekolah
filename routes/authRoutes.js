@@ -15,30 +15,6 @@ router.post("/", (req, res) => {
     });
   }
 
-  // LOGIN DARURAT SEMENTARA
-  if (username === "admin" && password === "12345") {
-    const token = jwt.sign(
-      {
-        id: 1,
-        username: "admin",
-        nama: "Administrator",
-        role: "admin"
-      },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: process.env.JWT_EXPIRES_IN || "7d"
-      }
-    );
-
-    return res.json({
-      message: "Login berhasil",
-      token,
-      username: "admin",
-      nama: "Administrator",
-      role: "admin"
-    });
-  }
-
   db.query(
     "SELECT * FROM users WHERE username = ? AND is_active = 1 LIMIT 1",
     [username],
