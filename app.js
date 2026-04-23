@@ -25,7 +25,7 @@ const absensiGuruRoutes = require("./routes/absensiGuruRoutes");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// allowed origin
+// daftar origin yang diizinkan
 const allowedOrigins = [
   "http://localhost:5500",
   "http://127.0.0.1:5500",
@@ -36,7 +36,7 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: function (origin, callback) {
-    // izinkan request tanpa origin (postman, mobile app, server-to-server)
+    // izinkan request tanpa origin seperti Postman / mobile app / server-to-server
     if (!origin) return callback(null, true);
 
     if (allowedOrigins.includes(origin)) {
@@ -53,7 +53,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// root
+// ROOT
 app.get("/", (req, res) => {
   res.status(200).json({
     success: true,
@@ -61,7 +61,7 @@ app.get("/", (req, res) => {
   });
 });
 
-// ================= ROUTES =================
+// ROUTES
 app.use("/berita", beritaRoutes);
 app.use("/login", authRoutes);
 app.use("/guru", guruRoutes);
@@ -78,53 +78,7 @@ app.use("/absensi", absensiRoutes);
 app.use("/ppdb", ppdbRoutes);
 app.use("/absensi-guru", absensiGuruRoutes);
 
-// ================= TEMP ROUTE BUAT ADMIN =================
-// pakai sekali saja, lalu hapus setelah login berhasil
-app.get("/buat-admin-baru", async (req, res) => {
-  const bcrypt = require("bcrypt");
-
-  try {
-    const passwordHash = await bcrypt.hash("12345", 10);
-
-    const cekSql = "SELECT id FROM users WHERE username = ? LIMIT 1";
-    db.query(cekSql, ["adminbaru"], (cekErr, cekResults) => {
-      if (cekErr) {
-        return res.status(500).json({ success: false, message: cekErr.message });
-      }
-
-      if (cekResults.length > 0) {
-        return res.json({
-          success: true,
-          message: "User adminbaru sudah ada"
-        });
-      }
-
-      const insertSql = `
-        INSERT INTO users (nama, username, password, role, is_active)
-        VALUES (?, ?, ?, ?, ?)
-      `;
-
-      db.query(
-        insertSql,
-        ["Administrator Baru", "adminbaru", passwordHash, "admin", 1],
-        (insertErr) => {
-          if (insertErr) {
-            return res.status(500).json({ success: false, message: insertErr.message });
-          }
-
-          return res.json({
-            success: true,
-            message: "User adminbaru berhasil dibuat"
-          });
-        }
-      );
-    });
-  } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
-  }
-});
-
-// ================= 404 HANDLER =================
+// handler route tidak ditemukan
 app.use((req, res) => {
   res.status(404).json({
     success: false,
@@ -132,7 +86,7 @@ app.use((req, res) => {
   });
 });
 
-// ================= ERROR HANDLER =================
+// error handler umum
 app.use((err, req, res, next) => {
   console.error("SERVER ERROR:", err);
 
@@ -142,7 +96,6 @@ app.use((err, req, res, next) => {
   });
 });
 
-// ================= START SERVER =================
 app.listen(PORT, () => {
   console.log(`Server jalan di port ${PORT}`);
 });
