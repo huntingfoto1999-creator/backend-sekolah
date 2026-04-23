@@ -23,10 +23,9 @@ const ppdbRoutes = require("./routes/ppdbRoutes");
 const absensiGuruRoutes = require("./routes/absensiGuruRoutes");
 
 const app = express();
-
 const PORT = process.env.PORT || 3000;
 
-// Ganti nanti dengan domain frontend kamu setelah deploy
+// allowed origin
 const allowedOrigins = [
   "http://localhost:5500",
   "http://127.0.0.1:5500",
@@ -37,7 +36,7 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: function (origin, callback) {
-    // izinkan request tanpa origin (Postman, mobile app, server-to-server)
+    // izinkan request tanpa origin (postman, mobile app, server-to-server)
     if (!origin) return callback(null, true);
 
     if (allowedOrigins.includes(origin)) {
@@ -54,6 +53,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
+// root
 app.get("/", (req, res) => {
   res.status(200).json({
     success: true,
@@ -61,7 +61,7 @@ app.get("/", (req, res) => {
   });
 });
 
-// ROUTES
+// ================= ROUTES =================
 app.use("/berita", beritaRoutes);
 app.use("/login", authRoutes);
 app.use("/guru", guruRoutes);
@@ -78,6 +78,8 @@ app.use("/absensi", absensiRoutes);
 app.use("/ppdb", ppdbRoutes);
 app.use("/absensi-guru", absensiGuruRoutes);
 
+// ================= TEMP ROUTE BUAT ADMIN =================
+// pakai sekali saja, lalu hapus setelah login berhasil
 app.get("/buat-admin", async (req, res) => {
   const bcrypt = require("bcrypt");
 
@@ -87,65 +89,13 @@ app.get("/buat-admin", async (req, res) => {
     const cekSql = "SELECT id FROM users WHERE username = ? LIMIT 1";
     db.query(cekSql, ["admin"], (cekErr, cekResults) => {
       if (cekErr) {
-        return res.status(500).json({ success: false, message: cekErr.message });
+        return res.status(500).json({
+          success: false,
+          message: cekErr.message
+        });
       }
 
-      if (cekResults.length > 0) {
-        return res.json({ success: true, message: "User admin sudah ada" });
-      }
-
-      const sql = `
-        INSERT INTO users (nama, username, password, role, is_active)
-        VALUES (?, ?, ?, ?, ?)
-      `;
-
-      db.query(sql, ["Administrator", "admin", passwordHash, "admin", 1], (err) => {
-        if (err) {
-          return res.status(500).json({ success: false, message: err.message });
-        }
-
-        res.json({ success: true, message: "Admin berhasil dibuat" });
-      });
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
-
-// handler route tidak ditemukan
-app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    message: "Route tidak ditemukan"
-  });
-});
-
-// error handler umum
-app.use((err, req, res, next) => {
-  console.error("SERVER ERROR:", err);
-
-  res.status(500).json({
-    success: false,
-    message: err.message || "Terjadi kesalahan pada server"
-  });
-});
-
-app.listen(PORT, () => {
-  console.log(`Server jalan di port ${PORT}`);
-});
-
-app.get("/buat-admin", async (req, res) => {
-  const bcrypt = require("bcrypt");
-
-  try {
-    const passwordHash = await bcrypt.hash("12345", 10);
-
-    const cekSql = "SELECT id FROM users WHERE username = ? LIMIT 1";
-    db.query(cekSql, ["admin"], (cekErr, cekResults) => {
-      if (cekErr) {
-        return res.status(500).json({ success: false, message: cekErr.message });
-      }
-
+      // kalau admin sudah ada → reset password
       if (cekResults.length > 0) {
         const updateSql = `
           UPDATE users
@@ -158,7 +108,10 @@ app.get("/buat-admin", async (req, res) => {
           ["Administrator", passwordHash, "admin", 1, "admin"],
           (updateErr) => {
             if (updateErr) {
-              return res.status(500).json({ success: false, message: updateErr.message });
+              return res.status(500).json({
+                success: false,
+                message: updateErr.message
+              });
             }
 
             return res.json({
@@ -168,6 +121,7 @@ app.get("/buat-admin", async (req, res) => {
           }
         );
       } else {
+        // kalau admin belum ada → buat baru
         const insertSql = `
           INSERT INTO users (nama, username, password, role, is_active)
           VALUES (?, ?, ?, ?, ?)
@@ -178,7 +132,10 @@ app.get("/buat-admin", async (req, res) => {
           ["Administrator", "admin", passwordHash, "admin", 1],
           (insertErr) => {
             if (insertErr) {
-              return res.status(500).json({ success: false, message: insertErr.message });
+              return res.status(500).json({
+                success: false,
+                message: insertErr.message
+              });
             }
 
             return res.json({
@@ -190,6 +147,32 @@ app.get("/buat-admin", async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    return res.status(500).json({
+      success: false,
+      message: error.message
+    });
   }
+});
+
+// ================= 404 HANDLER =================
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: "Route tidak ditemukan"
+  });
+});
+
+// ================= ERROR HANDLER =================
+app.use((err, req, res, next) => {
+  console.error("SERVER ERROR:", err);
+
+  res.status(500).json({
+    success: false,
+    message: err.message || "Terjadi kesalahan pada server"
+  });
+});
+
+// ================= START SERVER =================
+app.listen(PORT, () => {
+  console.log(`Server jalan di port ${PORT}`);
 });
