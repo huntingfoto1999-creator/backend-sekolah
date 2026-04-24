@@ -78,6 +78,33 @@ app.use("/absensi", absensiRoutes);
 app.use("/ppdb", ppdbRoutes);
 app.use("/absensi-guru", absensiGuruRoutes);
 
+app.get("/statistik-public", (req, res) => {
+  const sql = `
+    SELECT
+      (SELECT COUNT(*) FROM siswa) AS total_siswa,
+      (SELECT COUNT(*) FROM guru) AS total_guru,
+      (SELECT COUNT(*) FROM berita) AS total_berita,
+      38 AS tahun_berdiri
+  `;
+
+  db.query(sql, (err, results) => {
+    if (err) {
+      return res.status(500).json({
+        success: false,
+        message: "Gagal ambil statistik",
+        error: err.message
+      });
+    }
+
+    res.json({
+      total_siswa: results[0].total_siswa || 0,
+      total_guru: results[0].total_guru || 0,
+      total_berita: results[0].total_berita || 0,
+      tahun_berdiri: results[0].tahun_berdiri || 38
+    });
+  });
+});
+
 // handler route tidak ditemukan
 app.use((req, res) => {
   res.status(404).json({
